@@ -7,8 +7,12 @@ using System.Runtime.Serialization;
 
 namespace PersonSerialization
 {
-    class Person : ISerializable
+    [Serializable]
+    class Person : IDeserializationCallback, ISerializable
     {
+        [NonSerialized]
+        private int age;
+
         private string name;
 
         public string Name
@@ -31,18 +35,35 @@ namespace PersonSerialization
         {
             this.Name = Name;
             this.birthDate = birthDate;
+            CalculateAge();
         }
         public enum Genders : int { Male, Female };
         public Genders gender;
 
         public override string ToString()
         {
-            return (String.Format("name: {0}, birth date: {1}", this.name, this.birthDate));
+            return (String.Format("name: {0}, birth date: {1} age: {2}", this.name, this.birthDate, this.age));
+        }
+        public Person(SerializationInfo info, StreamingContext context)
+        {
+            Name = info.GetString("Name");
+            BirthDate = info.GetDateTime("DOB");
+        }
+        public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            info.AddValue("Name", name);
+            info.AddValue("DOB", BirthDate);
+            Name = info.GetString("Name");
+            BirthDate = info.GetDateTime("DOB");
         }
 
-        public void GetObjectData(SerializationInfo info, StreamingContext context)
+        public void OnDeserialization(object sender)
         {
-            throw new NotImplementedException();
+            CalculateAge();
+        }
+        private void CalculateAge()
+        {
+            this.age = DateTime.Now.Year - BirthDate.Year;
         }
     }
 }
